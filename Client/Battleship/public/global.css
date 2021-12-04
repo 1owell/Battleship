@@ -5,6 +5,8 @@ html, body {
 }
 
 body {
+	background: rgb(241,241,241);
+	background: linear-gradient(204deg, rgba(241,241,241,1) 0%, rgba(0,107,129,1) 100%); 
 	color: #333;
 	margin: 0;
 	padding: 8px;
