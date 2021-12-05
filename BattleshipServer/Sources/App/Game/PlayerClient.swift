@@ -9,14 +9,39 @@ import Vapor
 
 final class PlayerClient: WebSocketClient {
 	
-	private(set) var username: String?
+	var username: String
+	var inGame: Bool = false
+	var mostRecentRequest: GameRequest? // the player's most recent request to another player
+	var gameProposals: [GameProposal] = []
 	
-	init(socket: WebSocket, username: String? = nil) {
+	init(socket: WebSocket, username: String) {
 		self.username = username
 		super.init(socket: socket)
 	}
 	
-	func setUsername(_ name: String) {
-		username = name
-	}	
+	
+	func processMessage(_ message: String) {
+		// deconstruct message for game commands
+	}
+	
+	
+	func sendGameProposal(from sender: String) -> Bool {
+		if !inGame {
+			let proposal = GameProposal(fromPlayer: sender)
+			send(message: proposal)
+			gameProposals.append(proposal)
+			
+			return true
+		}
+		return false
+	}
+	
+	
+	func removeProposalsFrom(sender: String) {
+		gameProposals.removeAll { $0.fromPlayer == sender }
+	}
+	
+	func startGame() {
+		inGame = true
+	}
 }

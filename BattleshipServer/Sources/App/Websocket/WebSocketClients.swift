@@ -11,39 +11,66 @@ import Foundation
 class WebSocketClients<Client: WebSocketClient> {
 	
 	var eventLoop: EventLoop
-	var storage: [UUID: Client]
+	var clients: [UUID: Client]
 	
 	var active: [Client] {
-		storage.values.filter { !$0.socket.isClosed }
+		clients.values.filter { $0.isActive }
 	}
 	
-	init(eventLoop: EventLoop, clients: [UUID: Client] = [:]) {
+	
+	init(eventLoop: EventLoop, clients: [UUID:Client] = [:]) {
 		self.eventLoop = eventLoop
-		self.storage   = clients
+		self.clients   = clients
 	}
 	
-	func add(_ client: Client) {
-		storage[client.id] = client
+	
+	init(eventLoop: EventLoop, clients: [UUID:WebSocketClient] = [:]) {
+		self.eventLoop = eventLoop
+		self.clients   = clients as? [UUID:Client] ?? [:]
 	}
 	
-	func remove(_ client: Client) {
-		storage[client.id] = nil
-	}
-	
-	func find(_ uuid: UUID) -> Client? {
-		storage[uuid]
-	}
-	
-	func broadcast<Message: Encodable>(message: Message) {
-		if let str = try? JSONEncoder().encode(message), let payload = String(data: str, encoding: .utf8) {
-			active.forEach { client in
-				client.socket.send(payload)
-			}
-		}
-	}
 	
 	deinit {
-		let futures = storage.values.map { $0.socket.close() }
+		let futures = clients.values.map { $0.socket.close() }
 		try! eventLoop.flatten(futures).wait()
+	}
+	
+	
+	func add(_ client: Client) {
+		clients[client.id] = client
+	}
+	
+	
+	func remove(_ client: Client) {
+		clients.removeValue(forKey: client.id)
+	}
+	
+	
+	func find(_ uuid: UUID, isActive: Bool = true) -> Client? {
+		if let client = clients[uuid] {
+			if isActive {
+				if client.isActive {
+					return client
+				}
+			} else {
+				return client
+			}
+		}
+		
+		return nil
+	}
+	
+	
+	func find(_ uuid: String, isActive: Bool = true) -> Client? {
+		guard let uuid = UUID(uuidString: uuid) else { return nil }
+		
+		return find(uuid, isActive: isActive)
+	}
+	
+	
+	func broadcast<Message: Encodable>(message: Message) {
+		active.forEach { client in
+			client.send(message: message)
+		}
 	}
 }

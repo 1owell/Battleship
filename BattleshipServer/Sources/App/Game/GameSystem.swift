@@ -7,60 +7,125 @@
 
 import Vapor
 
+struct Player: Content {
+	let username: String
+	let inGame: Bool
+}
+
+// The main container for the entire server that handles setup and all player connections
 class GameSystem {
-	private(set) var clients: WebSocketClients<PlayerClient>
 	
-	init(eventLoop: EventLoop) {
-		clients = WebSocketClients(eventLoop: eventLoop)
+	private(set) var players: WebSocketClients<PlayerClient>
+	private let globalChat: ChatRoom
+	private let activeGames: [Game] = []
+	private let eventLoop: EventLoop
+	
+	var activePlayers: [Player] {
+		players.active.compactMap { player in
+			Player(username: player.username, inGame: player.inGame)
+		}
 	}
 	
-	func connect(_ ws: WebSocket) {
+	init(eventLoop: EventLoop) {
+		self.eventLoop = eventLoop
+		players    = WebSocketClients(eventLoop: eventLoop)
+		globalChat = ChatRoom(chatters: WebSocketClients(eventLoop: eventLoop))
+	}
+	
+	
+	// Adds the given websocket connection to the global chat room
+	func subscribeToGlobalChat(_ ws: WebSocket) {
+		let connection = WebSocketClient(socket: ws)
+		
+		globalChat.addConnection(connection)
+		
+		ws.onClose.whenComplete{ [unowned self] _ in
+			globalChat.removeConnection(connection)
+		}
+	}
+	
+	
+	// Attempts to broadcast the given message
+	func postGlobalChatMessage(_ message: String, from player: PlayerClient) -> Bool {
+		return globalChat.postChat(message: message, from: player)
+	}
+	
+	
+	func connectPlayer(_ ws: WebSocket, username: String) {
 		
 		// Initialize a new PlayerClient with a UUID
-		let player = PlayerClient(socket: ws)
+		let player = PlayerClient(socket: ws, username: username)
 		
 		// Add the player to the collection
-		clients.add(player)
+		players.add(player)
 		
 		// Return player's id to client
 		ws.send(player.id.uuidString)
 		
 		// Handle incoming string from websocket
-		ws.onText { [unowned self] ws, text in
-			handleIncomingText(text, with: ws, player: player)
+		ws.onText { ws, text in
+			player.processMessage(text)
 		}
 		
 		// Remove player when connection is closed
 		ws.onClose.whenComplete { [unowned self] _ in
-			clients.remove(player)
+			players.remove(player)
 		}
+	}
+	
+	
+	func proposeGame(with request: GameRequest) -> Bool {
+		guard let player = players.find(request.id) else { return false }
+		
+		if let opponent = players.active.first { $1.username == request.to } as? PlayerClient {
+			if opponent.sendGameProposal(from: request.from) {
+				player.hasPendingRequest = request
+				return true
+			}
+		}
+	
+		return false
+	}
+	
+	
+	func respondToInvite(_ inviteResponse: InviteResponse) -> Bool {
+		// Retrieve the player client that is responding to the invite
+		// Retrieve the game proposal that the player has
+		guard let player = players.find(inviteResponse.id),
+			  let proposal = player.gameProposals.first { $0.fromPlayer == inviteResponse.sender } else {
+			return false
+		}
+		
+		if inviteResponse.response == true {
+			// create a game with the two players
+			guard let player2 = players.active.first { $1.username == inviteResponse.sender } else {
+				return false
+			}
+			
+			startGame(with: player, and: player2)
+		}
+		
+		player.removeProposalsFrom(sender: inviteResponse.sender)
+		return true
+	}
+	
+	
+	func startGame(with player1: PlayerClient, and player2: PlayerClient) {
+		// create a game state with the players, and initalize a chat session
+		let chatRoom = createChatRoom(with: [player1, player2])
+		let newGame  = Game(player1: player1, player2: player2, chat: chatRoom)
 	}
 	
 	
 	func usernameIsUnique(_ username: String) -> Bool {
-		clients.active.first { $0.username == username } == nil
+		players.active.first { $0.username == username } == nil
 	}
 	
 	
-	private func handleIncomingText(_ text: String, with webSocket: WebSocket, player: PlayerClient) {
-		guard let username = player.username else {
-			webSocket.send("Cannot chat until you have a username!")
-			return
-		}
+	private func createChatRoom(with clients: [WebSocketClient]) -> ChatRoom {
+		let dict    = Dictionary(uniqueKeysWithValues: clients.map { ($0.id, $0) })
+		let clients = WebSocketClients(eventLoop: eventLoop, clients: dict)
 		
-		if let chatMessage = text.decodeWebSocketMessage(NewChatMessage.self) {
-			if let broadcastMessage = ChatHelper.verifyMessage(chatMessage, username: username) {
-				clients.broadcast(message: broadcastMessage)
-			}
-		}
-		
-		if let gameMessage = text.decodeWebSocketMessage(GameMessage.self) {
-			// handle game message
-		}
-	}
-	
-	private func verifyUsername(_ username: String) -> Bool {
-		// check that username is unique
-		return true
+		return ChatRoom(chatters: clients)
 	}
 }

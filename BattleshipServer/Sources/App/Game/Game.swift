@@ -5,23 +5,43 @@
 //  Created by Lowell Pence on 11/21/21.
 //
 
-import Foundation
+import Vapor
 
 struct Game {
-	var board: Board
+	let chatRoom: ChatRoom
+	var player1: PlayerClient
+	var player2: PlayerClient
+	
+	var isPlayer1Turn = false
+	
+	init(player1: PlayerClient, player2: PlayerClient, chat: ChatRoom) {
+		self.player1  = player1
+		self.player2  = player2
+		self.chatRoom = chatRoom
+		
+		player1.startGame()
+		player2.startGame()
+	}
+	
+	
+	
+	func endGame() {
+		player1.inGame = false
+		player2.inGame = false
+	}
 }
 
 struct Board {
-	associatedtype Target = (x: Int, y: Int)
+	typealias Target = (x: Int, y: Int)
 	var player: PlayerClient
 	var cells: [[Cell]] = []
 	
 	func registerAttack(at target: Target) {
-		if cells[target.x[target.y]].attacked {
-			return "already attacked"
-		} else {
-			cells[target.x[target.y]].attacked = true
-		}
+//		if cells[target.x[target.y]].attacked {
+//			return "already attacked"
+//		} else {
+//			cells[target.x[target.y]].attacked = true
+//		}
 	}
 }
 

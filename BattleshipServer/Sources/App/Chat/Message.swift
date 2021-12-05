@@ -24,9 +24,13 @@ struct ChatMessage: Encodable, Identifiable {
 
 
 enum ChatHelper {
-	static func verifyMessage(_ message: NewChatMessage, username: String) -> ChatMessage? {
-		if !message.message.isEmpty {
-			return ChatMessage(username: username, message: message.message)
+	static func verifyMessage(_ message: String, username: String) -> ChatMessage? {
+		
+		if !message.isEmpty {
+			let sanitized = message.replacingOccurrences(of: "<[^>]+>",
+														 with: "",
+														 options: .regularExpression, range: nil)
+			return ChatMessage(username: username, message: sanitized)
 		}
 		
 		return nil
