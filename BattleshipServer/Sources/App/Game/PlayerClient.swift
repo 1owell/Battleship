@@ -16,7 +16,6 @@ final class PlayerClient: WebSocketClient {
 	
 	var username: String
 	var inGame: Bool = false
-	var mostRecentRequest: GameRequest? // the player's most recent request to another player
 	var gameProposals: [GameProposal] = []
 	
 	init(socket: WebSocket, username: String) {
@@ -46,7 +45,10 @@ final class PlayerClient: WebSocketClient {
 		gameProposals.removeAll { $0.fromPlayer == sender }
 	}
 	
+	
+	// Set in game status to true and send start game message
 	func startGame() {
 		inGame = true
+		send(message: GameMessage(status: GameCode.start))
 	}
 }

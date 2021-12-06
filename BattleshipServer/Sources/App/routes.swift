@@ -76,6 +76,32 @@ func routes(_ app: Application) throws {
 		
 		return HTTPStatus.badRequest
 	}
+	
+	
+	// Submit the ships for a player's board
+	app.post("game", "ships") { req -> HTTPStatus in
+		let shipPositions = try req.content.decode(ShipPositions.self)
+		if ShipPositions.validateShipPositions(shipPositions.positions) {
+			
+			// call gameSystem....
+			
+			return HTTPStatus.ok
+		} else {
+			return HTTPStatus.badRequest
+		}
+	}
+	
+	
+	app.post("game", "attack", ":uuid", ":cell") { req -> HTTPStatus in
+		guard let cell = req.parameters.get("cell", as: Int.self),
+			  let id = UUID(uuidString: req.parameters.get("uuid")!) else { return HTTPStatus.badRequest }
+		
+		guard let player = gameSystem.players.find(id) else { return HTTPStatus.notFound }
+		
+		//gameSystem.processAttack(from: player, at: cell)
+		
+		return HTTPStatus.ok
+	}
 
 
 	// Updates the username for a given player (by ID)

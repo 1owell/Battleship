@@ -8,15 +8,21 @@
 import Vapor
 
 struct Game {
+	struct Player {
+		let client: PlayerClient
+		let board: Board? = nil
+	}
+	
+	
 	let chatRoom: ChatRoom
-	var player1: PlayerClient
-	var player2: PlayerClient
-	
+	let players: [UUID: Player] = [:]
 	var isPlayer1Turn = false
+	private var waitingOnPlayers = 2
 	
+
 	init(player1: PlayerClient, player2: PlayerClient, chat: ChatRoom) {
-		self.player1  = player1
-		self.player2  = player2
+		players[player1.id] = Game.Player(client: player1)
+		players[player2.id] = Game.Player(client: player2)
 		self.chatRoom = chat
 		
 		player1.startGame()
@@ -28,16 +34,25 @@ struct Game {
 		player2.inGame = false
 	}
 	
+	func createBoard(with ships: ShipPositions, for player: PlayerClient) {
+		players[player.id]?.board = Board(shipPositions: ships)
+		waitingOnPlayers -= 1
+		if waitingOnPlayers == 0 {
+			startGame()
+		}
+	}
 	
+	func startGame() {
+		// tell the first player that it is their turn
+		
+	}
 }
 
+
 struct Board {
-	var ships: [Int]
 	var cells: [Cell]
 
-	init(shipPositions: [Int]) {
-		self.ships = shipPositions
-		
+	init(shipPositions: ShipPositions) {
 		var cells = [Cell]()
 		for i in 1...100 {
 			cells.append(Cell(isOccupied: shipPositions.contains(i)))
@@ -46,35 +61,6 @@ struct Board {
 		self.cells = cells
 	}
 	
-
-	static func validateShipPositions(_ positions: [[Int]]) -> Bool {
-		let allPositions: [Int] = Array(Set(Array(positions.joined())))
-		let validCells  = allPositions.allSatisfy { $0 > 0 && $0 <= 100 }
-		let validSize   = allPositions.count == Ship.totalSize()
-		let validAmount = positions.count == Ship.allCases.count
-		let validShips  = positions.map({ $0.count }).sorted() == Ship.shipSizes()
-
-		guard validCells, validAmount, validSize, validShips else { return false }
-
-		// Check that for each shipPosition, the locations are connected either vertically or horizontally
-		for shipPosition in positions {
-			// check that the shipPosition array has integers that are either sequential, or all the same when modulo 10
-			let shipPosition = shipPosition.sorted()
-			if shipPosition.map { $0 - 1 }.dropFirst() == shipPosition.dropLast() {
-				// Horizontal - check that ship doesn't span multiple rows
-				if getRow(for: shipPosition.first!) != getRow(for: shipPosition.last!) {
-					return false
-				}
-			} else {
-				if getCol(for: shipPosition.first!) != getCol(for: shipPosition.last!) {
-					return false
-				}
-			}
-		}
-		
-		return true
-	}
-
 
 	func getState() -> [Int] {
 		cells.map { $0.state.rawValue }
@@ -108,7 +94,40 @@ struct Cell {
 
 
 struct ShipPositions: Content {
+	let id: String
 	let positions: [[Int]]
+	
+	func contains(_ position: Int) -> Bool {
+		positions.joined().contains(position)
+	}
+	
+	static func validateShipPositions(_ positions: [[Int]]) -> Bool {
+		let allPositions: [Int] = Array(Set(Array(positions.joined())))
+		let validCells  = allPositions.allSatisfy { $0 > 0 && $0 <= 100 }
+		let validSize   = allPositions.count == Ship.totalSize()
+		let validAmount = positions.count == Ship.allCases.count
+		let validShips  = positions.map({ $0.count }).sorted() == Ship.shipSizes()
+
+		guard validCells, validAmount, validSize, validShips else { return false }
+
+		// Check that for each shipPosition, the locations are connected either vertically or horizontally
+		for shipPosition in positions {
+			// check that the shipPosition array has integers that are either sequential, or all the same when modulo 10
+			let shipPosition = shipPosition.sorted()
+			if shipPosition.map { $0 - 1 }.dropFirst() == shipPosition.dropLast() {
+				// Horizontal - check that ship doesn't span multiple rows
+				if Board.getRow(for: shipPosition.first!) != Board.getRow(for: shipPosition.last!) {
+					return false
+				}
+			} else {
+				if Board.getCol(for: shipPosition.first!) != Board.getCol(for: shipPosition.last!) {
+					return false
+				}
+			}
+		}
+		
+		return true
+	}
 }
 
 
