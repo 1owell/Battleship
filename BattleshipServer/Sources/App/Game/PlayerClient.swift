@@ -7,6 +7,11 @@
 
 import Vapor
 
+struct Player: Content {
+	let username: String
+	let inGame: Bool
+}
+
 final class PlayerClient: WebSocketClient {
 	
 	var username: String

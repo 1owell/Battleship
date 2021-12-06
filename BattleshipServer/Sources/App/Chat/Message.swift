@@ -8,12 +8,6 @@
 import Foundation
 
 
-// Data received from a client
-struct NewChatMessage: Decodable {
-	let message: String
-}
-
-
 // The data that the server will send to client(s)
 struct ChatMessage: Encodable, Identifiable {
 	let date = Date()

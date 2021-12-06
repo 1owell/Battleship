@@ -7,17 +7,12 @@
 
 import Vapor
 
-struct Player: Content {
-	let username: String
-	let inGame: Bool
-}
-
 // The main container for the entire server that handles setup and all player connections
 class GameSystem {
 	
 	private(set) var players: WebSocketClients<PlayerClient>
 	private let globalChat: ChatRoom
-	private let activeGames: [Game] = []
+	private var activeGames: [Game] = []
 	private let eventLoop: EventLoop
 	
 	var activePlayers: [Player] {
@@ -77,9 +72,9 @@ class GameSystem {
 	func proposeGame(with request: GameRequest) -> Bool {
 		guard let player = players.find(request.id) else { return false }
 		
-		if let opponent = players.active.first { $1.username == request.to } as? PlayerClient {
+		if let opponent = players.active.first(where: { $0.username == request.to }) {
 			if opponent.sendGameProposal(from: request.from) {
-				player.hasPendingRequest = request
+				player.mostRecentRequest = request
 				return true
 			}
 		}
@@ -92,13 +87,13 @@ class GameSystem {
 		// Retrieve the player client that is responding to the invite
 		// Retrieve the game proposal that the player has
 		guard let player = players.find(inviteResponse.id),
-			  let proposal = player.gameProposals.first { $0.fromPlayer == inviteResponse.sender } else {
+			  let _ = player.gameProposals.first(where: { $0.fromPlayer == inviteResponse.sender }) else {
 			return false
 		}
 		
 		if inviteResponse.response == true {
 			// create a game with the two players
-			guard let player2 = players.active.first { $1.username == inviteResponse.sender } else {
+			guard let player2 = players.active.first(where: { $0.username == inviteResponse.sender }) else {
 				return false
 			}
 			
@@ -114,6 +109,7 @@ class GameSystem {
 		// create a game state with the players, and initalize a chat session
 		let chatRoom = createChatRoom(with: [player1, player2])
 		let newGame  = Game(player1: player1, player2: player2, chat: chatRoom)
+		activeGames.append(newGame)
 	}
 	
 	

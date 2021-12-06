@@ -67,8 +67,14 @@ func routes(_ app: Application) throws {
 	
 	app.post("inviteResponse") { req -> HTTPStatus in
 		if let inviteRes = try? req.query.decode(InviteResponse.self) {
-			gameSystem.respondToInvite()
+			if gameSystem.respondToInvite(inviteRes) {
+				return HTTPStatus.ok
+			}
+			
+			return HTTPStatus.notFound
 		}
+		
+		return HTTPStatus.badRequest
 	}
 
 
@@ -86,7 +92,4 @@ func routes(_ app: Application) throws {
 			return HTTPStatus.notFound
 		}
 	}
-	
-	
-	
 }
