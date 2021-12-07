@@ -22,7 +22,7 @@ struct Players {
 	}
 	
 	func getOpponent(for player: PlayerClient) -> Game.Player {
-		player1.client == player ? player1 : player2
+		player1.client == player ? player2 : player1
 	}
 	
 	mutating func setBoard(for player: PlayerClient, with ships: ShipPositions) -> Bool {

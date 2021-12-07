@@ -8,17 +8,21 @@
 import Vapor
 
 enum GameCode: Int {
-	case start = 0
+	case gameStart = 0
 	case turnStart = 1
-	case lost = 2
-	case won = 3
+	case turnEnd = 2
+	case lost = 3
+	case won = 4
+	case chat = 5
 }
 
-struct GameMessage: Codable {
+struct GameMessage: Encodable {
 	let status: Int
+	let payload: ChatMessage?
 	
-	init(_ code: GameCode) {
+	init(_ code: GameCode, payload: ChatMessage? = nil) {
 		self.status = code.rawValue
+		self.payload = payload
 	}
 }
 

@@ -28,7 +28,8 @@ final class ChatRoom {
 	// Sends the given message to each connection
 	func postChat(message: String, from player: PlayerClient) -> Bool {
 		if let message = ChatHelper.verifyMessage(message, username: player.username) {
-			chatters.broadcast(message: message)
+			let gameMessage = GameMessage(.chat, payload: message)
+			chatters.broadcast(message: gameMessage)
 			return true
 		}
 		

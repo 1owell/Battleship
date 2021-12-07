@@ -57,7 +57,7 @@ final class PlayerClient: WebSocketClient {
 	// Set in game status to true and send start game message
 	func startGame(gameID: UUID) {
 		currentGame = gameID
-		send(message: GameMessage(GameCode.start))
+		send(message: GameMessage(GameCode.gameStart))
 	}
 	
 	

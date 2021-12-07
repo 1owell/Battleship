@@ -81,6 +81,8 @@ class GameSystem {
 		
 		// Find the requested opponent by their username
 		if let opponent = players.active.first(where: { $0.username == request.to }) {
+			guard opponent != player else { return false }
+			
 			if opponent.sendGameProposal(from: player) {
 				return true
 			}
@@ -95,7 +97,8 @@ class GameSystem {
 		// Retrieve the player client that is responding to the invite
 		// Retrieve the game proposal that the player has
 		guard let player = players.find(inviteResponse.id),
-			  let player2 = player.pendingRequests.first(where: { $0.username == inviteResponse.sender }) else {
+			  let player2 = player.pendingRequests.first(where: { $0.username == inviteResponse.sender }),
+			  player != player2 else {
 			return false
 		}
 		
