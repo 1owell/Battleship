@@ -8,8 +8,7 @@
 import Vapor
 
 struct GameRequest: Content {
-	let id: String
-	let to: String
+	let to: String // is a username
 	let from: String
 }
 

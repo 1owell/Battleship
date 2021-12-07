@@ -7,50 +7,102 @@
 
 import Vapor
 
-struct Game {
+class Game: Identifiable {
 	struct Player {
 		let client: PlayerClient
-		let board: Board? = nil
+		var board: Board? = nil
 	}
 	
-	
+	let id: UUID
 	let chatRoom: ChatRoom
-	let players: [UUID: Player] = [:]
-	var isPlayer1Turn = false
+	var players: Players
+	var currentTurn: Player? = nil
 	private var waitingOnPlayers = 2
 	
 
 	init(player1: PlayerClient, player2: PlayerClient, chat: ChatRoom) {
-		players[player1.id] = Game.Player(client: player1)
-		players[player2.id] = Game.Player(client: player2)
+		let players = Players(player1: Game.Player(client: player1), player2: Game.Player(client: player2))
+		let id = UUID()
+		
+		self.id = id
+		self.players = players
 		self.chatRoom = chat
 		
-		player1.startGame()
-		player2.startGame()
+		players.start(id: id)
 	}
+	
 	
 	func endGame() {
-		player1.inGame = false
-		player2.inGame = false
+		players.endGame()
 	}
 	
+	
+	func processAttack(for player: PlayerClient, cell: Int) {
+		// check turn
+		
+		// call board.attack
+		
+		emitGameState()
+	}
+	
+	
 	func createBoard(with ships: ShipPositions, for player: PlayerClient) {
-		players[player.id]?.board = Board(shipPositions: ships)
+		players.setBoard(for: player, with: ships)
+		
 		waitingOnPlayers -= 1
 		if waitingOnPlayers == 0 {
 			startGame()
 		}
 	}
 	
+	
 	func startGame() {
 		// tell the first player that it is their turn
 		
+	}
+	
+	
+	func emitGameState() {
+		guard let p1Board = players.player1.board, let p2Board = players.player2.board else { return }
+		
+		let p1State = GameState(playerState: p1Board.getState(),
+								opponentState: p2Board.getState())
+		
+		let p2State = GameState(playerState: p2Board.getState(),
+								opponentState: p1Board.getState())
+		
+		players.player1.client.send(message: p1State)
+		players.player2.client.send(message: p2State)
+	}
+}
+
+
+struct Players {
+	var player1: Game.Player
+	var player2: Game.Player
+	
+	func start(id: UUID) {
+		player1.client.startGame(gameID: id)
+		player2.client.startGame(gameID: id)
+	}
+	
+	func endGame() {
+		player1.client.endGame()
+		player2.client.endGame()
+	}
+	
+	mutating func setBoard(for player: PlayerClient, with ships: ShipPositions) {
+		if player1.client.id == player.id {
+			player1.board = Board(shipPositions: ships)
+		} else if player2.client.id == player.id {
+			player2.board = Board(shipPositions: ships)
+		}
 	}
 }
 
 
 struct Board {
-	var cells: [Cell]
+	private var cells: [Cell]
 
 	init(shipPositions: ShipPositions) {
 		var cells = [Cell]()
@@ -59,6 +111,15 @@ struct Board {
 		}
 		
 		self.cells = cells
+	}
+	
+	
+	// boardIndex is 1-100
+	mutating func registerAttack(at boardIndex: Int) -> Bool {
+		guard boardIndex > 0 && boardIndex <= 100 else { return false }
+		
+		
+		return cells[boardIndex - 1].attack()
 	}
 	
 
@@ -131,7 +192,7 @@ struct ShipPositions: Content {
 }
 
 
-enum Ship: CaseIterable {
+enum Ship: ShipSet {
 	case patrolBoat
 	case destroyer
 	case submarine
@@ -161,4 +222,11 @@ enum Ship: CaseIterable {
 	static func totalSize() -> Int {
 		return 17
 	}
+}
+
+
+protocol ShipSet: CaseIterable {
+	static func totalSize() -> Int
+	static func shipSizes() -> [Int]
+	func length() -> Int
 }

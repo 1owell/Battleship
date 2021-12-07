@@ -12,7 +12,7 @@ class GameSystem {
 	
 	private(set) var players: WebSocketClients<PlayerClient>
 	private let globalChat: ChatRoom
-	private var activeGames: [Game] = []
+	private var activeGames: [UUID:Game] = [:]
 	private let eventLoop: EventLoop
 	
 	var activePlayers: [Player] {
@@ -58,9 +58,9 @@ class GameSystem {
 		ws.send(player.id.uuidString)
 		
 		// Handle incoming string from websocket
-		ws.onText { ws, text in
-			player.processMessage(text)
-		}
+//		ws.onText { ws, text in
+//			player.processMessage(text)
+//		}
 		
 		// Remove player when connection is closed
 		ws.onClose.whenComplete { [unowned self] _ in
@@ -70,12 +70,17 @@ class GameSystem {
 	
 	
 	func proposeGame(with request: GameRequest) -> Bool {
-		guard let player = players.find(request.id) else { return false }
+		guard let player = players.find(request.from) else { return false }
 		
+		// Verify that the sender is not in a game
+		guard player.inGame == false else { return false }
+		
+		// Find the requested opponent by their username
 		if let opponent = players.active.first(where: { $0.username == request.to }) {
-			if opponent.sendGameProposal(from: request.from) {
+			if opponent.sendGameProposal(from: player) {
 				return true
 			}
+			return true // even if they are in game should request was still OK
 		}
 	
 		return false
@@ -86,34 +91,49 @@ class GameSystem {
 		// Retrieve the player client that is responding to the invite
 		// Retrieve the game proposal that the player has
 		guard let player = players.find(inviteResponse.id),
-			  player.gameProposals.contains(where: { $0.fromPlayer == inviteResponse.sender }) else {
+			  let player2 = player.pendingRequests.first(where: { $0.username == inviteResponse.sender }) else {
 			return false
 		}
 		
 		if inviteResponse.response == true {
 			// create a game with the two players
-			guard let player2 = players.active.first(where: { $0.username == inviteResponse.sender }) else {
-				return false
-			}
-			
 			startGame(with: player, and: player2)
 		}
 		
-		player.removeProposalsFrom(sender: inviteResponse.sender)
+		player.removeRequestsFrom(sender: player2)
+		
 		return true
 	}
 	
 	
-	func startGame(with player1: PlayerClient, and player2: PlayerClient) {
-		// create a game state with the players, and initalize a chat session
-		let chatRoom = createChatRoom(with: [player1, player2])
-		let newGame  = Game(player1: player1, player2: player2, chat: chatRoom)
-		activeGames.append(newGame)
+	func submitShips(ships: ShipPositions, for player: PlayerClient) -> Bool {
+		if let gameID = player.currentGame, let game = activeGames[gameID] {
+			game.createBoard(with: ships, for: player)
+			return true
+		}
+		
+		return false
+	}
+	
+	
+	func processAttack(from player: PlayerClient, at cell: Int) {
+		if let gameID = player.currentGame, let game = activeGames[gameID] {
+			game.processAttack(for: player, cell: cell)
+		}
 	}
 	
 	
 	func usernameIsUnique(_ username: String) -> Bool {
 		players.active.first { $0.username == username } == nil
+	}
+	
+	
+	private func startGame(with player1: PlayerClient, and player2: PlayerClient) {
+		// create a game state with the players, and initalize a chat session
+		let chatRoom = createChatRoom(with: [player1, player2])
+		let newGame  = Game(player1: player1, player2: player2, chat: chatRoom)
+		
+		activeGames[newGame.id] = newGame
 	}
 	
 	

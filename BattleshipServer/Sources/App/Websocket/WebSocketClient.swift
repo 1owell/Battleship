@@ -8,6 +8,7 @@
 import Vapor
 
 class WebSocketClient: Identifiable {
+
 	let id: UUID = UUID()
 	var socket: WebSocket
 	
@@ -24,5 +25,15 @@ class WebSocketClient: Identifiable {
 		   let payload = String(data: str, encoding: .utf8) {
 			socket.send(payload)
 		}
+	}
+}
+
+extension WebSocketClient: Hashable {
+	static func == (lhs: WebSocketClient, rhs: WebSocketClient) -> Bool {
+		lhs.id == rhs.id
+	}
+	
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
 	}
 }

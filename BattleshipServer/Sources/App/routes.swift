@@ -27,6 +27,22 @@ func routes(_ app: Application) throws {
 	}
 	
 	
+	// Updates the username for a given player (by ID)
+	app.put("username", ":uuid") { req -> HTTPStatus in
+		if let id = UUID(uuidString: req.parameters.get("uuid")!),
+		   let player = gameSystem.players.find(id),
+		   let username = req.body.string {
+			guard gameSystem.usernameIsUnique(username) else { return HTTPStatus.conflict }
+			
+			player.username = username
+			
+			return HTTPStatus.ok
+		} else {
+			return HTTPStatus.notFound
+		}
+	}
+	
+	
 	app.webSocket("globalchat") { req, ws in
 		gameSystem.subscribeToGlobalChat(ws)
 	}
@@ -54,7 +70,7 @@ func routes(_ app: Application) throws {
 	}
 	
 	
-	app.get("requestGame") { req -> HTTPStatus in
+	app.post("requestGame") { req -> HTTPStatus in
 		if let gameReq = try? req.query.decode(GameRequest.self) {
 			if gameSystem.proposeGame(with: gameReq) {
 				return HTTPStatus.ok
@@ -82,10 +98,16 @@ func routes(_ app: Application) throws {
 	app.post("game", "ships") { req -> HTTPStatus in
 		let shipPositions = try req.content.decode(ShipPositions.self)
 		if ShipPositions.validateShipPositions(shipPositions.positions) {
-			
-			// call gameSystem....
-			
-			return HTTPStatus.ok
+			if let player = gameSystem.players.find(shipPositions.id) {
+				// call gameSystem....
+				if gameSystem.submitShips(ships: shipPositions, for: player) {
+					return HTTPStatus.ok
+				} else {
+					return HTTPStatus.notFound
+				}
+			} else {
+				return HTTPStatus.notFound
+			}
 		} else {
 			return HTTPStatus.badRequest
 		}
@@ -94,28 +116,18 @@ func routes(_ app: Application) throws {
 	
 	app.post("game", "attack", ":uuid", ":cell") { req -> HTTPStatus in
 		guard let cell = req.parameters.get("cell", as: Int.self),
-			  let id = UUID(uuidString: req.parameters.get("uuid")!) else { return HTTPStatus.badRequest }
+			  let id = UUID(uuidString: req.parameters.get("uuid")!),
+				(cell > 0 && cell <= 100) else {
+					return HTTPStatus.badRequest
+				}
 		
 		guard let player = gameSystem.players.find(id) else { return HTTPStatus.notFound }
 		
-		//gameSystem.processAttack(from: player, at: cell)
+		gameSystem.processAttack(from: player, at: cell)
 		
 		return HTTPStatus.ok
 	}
 
 
-	// Updates the username for a given player (by ID)
-	app.put("username", ":uuid") { req -> HTTPStatus in
-		if let id = UUID(uuidString: req.parameters.get("uuid")!),
-		   let player = gameSystem.players.find(id),
-		   let username = req.body.string {
-			guard gameSystem.usernameIsUnique(username) else { return HTTPStatus.conflict }
-			
-			player.username = username
-			
-			return HTTPStatus.ok
-		} else {
-			return HTTPStatus.notFound
-		}
-	}
+	
 }

@@ -19,6 +19,12 @@ struct GameMessage: Codable {
 	}
 }
 
+struct GameState: Content {
+	let playerState: [Int]
+	let opponentState: [Int]
+}
+
+
 
 /**
  Possible game related messages
