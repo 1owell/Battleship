@@ -57,15 +57,19 @@ class GameSystem {
 		// Return player's id to client
 		ws.send(player.id.uuidString)
 		
-		// Handle incoming string from websocket
-//		ws.onText { ws, text in
-//			player.processMessage(text)
-//		}
-		
 		// Remove player when connection is closed
 		ws.onClose.whenComplete { [unowned self] _ in
 			players.remove(player)
 		}
+	}
+	
+	
+	func postGameChat(from player: PlayerClient, message: String) -> Bool {
+		if let gameID = player.currentGame, let game = activeGames[gameID] {
+			return game.chatRoom.postChat(message: message, from: player)
+		}
+		
+		return false
 	}
 	
 	
@@ -100,9 +104,18 @@ class GameSystem {
 			startGame(with: player, and: player2)
 		}
 		
+		// TODO send message to sender that their invite was declined
+		
 		player.removeRequestsFrom(sender: player2)
 		
 		return true
+	}
+	
+	
+	func surrenderGame(for player: PlayerClient) {
+		if let gameID = player.currentGame, let game = activeGames[gameID] {
+			game.surrender(for: player)
+		}
 	}
 	
 	
@@ -144,3 +157,7 @@ class GameSystem {
 		return ChatRoom(chatters: clients)
 	}
 }
+
+
+// TODO: If time permits
+// Game is never cleared from the gameSystem, after it finishes

@@ -9,6 +9,13 @@ import Foundation
 
 struct Board {
 	private var cells: [Cell]
+	private var hits: Int = 0
+	
+	enum AttackOutcome {
+		case missed
+		case hit
+		case allSunk
+	}
 
 	init(shipPositions: ShipPositions) {
 		var cells = [Cell]()
@@ -21,11 +28,21 @@ struct Board {
 	
 	
 	// boardIndex is 1-100
-	mutating func registerAttack(at boardIndex: Int) -> Bool {
-		guard boardIndex > 0 && boardIndex <= 100 else { return false }
+	mutating func registerAttack(at boardIndex: Int) -> AttackOutcome? {
+		guard boardIndex > 0 && boardIndex <= 100 else { return nil }
 		
+		let attack = cells[boardIndex - 1].attack()
 		
-		return cells[boardIndex - 1].attack()
+		if attack {
+			hits += 1
+			if hits == Ship.totalSize() {
+				return .allSunk
+			}
+			
+			return .hit
+		}
+		
+		return .missed
 	}
 	
 
@@ -38,6 +55,6 @@ struct Board {
 	}
 
 	static func getRow(for index: Int) -> Int {
-		index / 10 + 1
+		Int(ceil(Double(index) / 10.0))
 	}
 }

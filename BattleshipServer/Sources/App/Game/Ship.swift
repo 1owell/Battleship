@@ -22,7 +22,16 @@ struct ShipPositions: Content {
 		let validAmount = positions.count == Ship.allCases.count
 		let validShips  = positions.map({ $0.count }).sorted() == Ship.shipSizes()
 
-		guard validCells, validAmount, validSize, validShips else { return false }
+		guard validCells, validAmount, validSize, validShips else {
+			print(positions)
+			print(allPositions)
+			print("validCells? \(validCells)")
+			print("validAmount? \(validAmount)")
+			print("validSize? \(validSize)")
+			print("validShips? \(validShips)")
+
+			return false
+		}
 
 		// Check that for each shipPosition, the locations are connected either vertically or horizontally
 		for shipPosition in positions {
@@ -31,10 +40,12 @@ struct ShipPositions: Content {
 			if shipPosition.map { $0 - 1 }.dropFirst() == shipPosition.dropLast() {
 				// Horizontal - check that ship doesn't span multiple rows
 				if Board.getRow(for: shipPosition.first!) != Board.getRow(for: shipPosition.last!) {
+					print("Ship is horizontal but on different columns \(shipPosition)")
 					return false
 				}
 			} else {
 				if Board.getCol(for: shipPosition.first!) != Board.getCol(for: shipPosition.last!) {
+					print("Ship is vertical but on different rows \(shipPosition)")
 					return false
 				}
 			}

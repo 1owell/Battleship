@@ -60,7 +60,10 @@ final class PlayerClient: WebSocketClient {
 		send(message: GameMessage(GameCode.start))
 	}
 	
-	func endGame() {
+	
+	
+	func endGame(didWin: Bool) {
 		currentGame = nil
+		send(message: GameMessage(didWin ? .won : .lost))
 	}
 }

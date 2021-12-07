@@ -16,20 +16,24 @@ struct Players {
 		player2.client.startGame(gameID: id)
 	}
 	
-	func endGame() {
-		player1.client.endGame()
-		player2.client.endGame()
+	func endGame(winner: PlayerClient) {
+		player1.client.endGame(didWin: winner == player1.client)
+		player2.client.endGame(didWin: winner == player2.client)
 	}
 	
 	func getOpponent(for player: PlayerClient) -> Game.Player {
 		player1.client == player ? player1 : player2
 	}
 	
-	mutating func setBoard(for player: PlayerClient, with ships: ShipPositions) {
-		if player1.client.id == player.id {
+	mutating func setBoard(for player: PlayerClient, with ships: ShipPositions) -> Bool {
+		if player1.client.id == player.id && player1.board == nil {
 			player1.board = Board(shipPositions: ships)
-		} else if player2.client.id == player.id {
+			return true
+		} else if player2.client.id == player.id && player2.board == nil {
 			player2.board = Board(shipPositions: ships)
+			return true
 		}
+		
+		return false
 	}
 }

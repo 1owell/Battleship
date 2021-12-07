@@ -98,13 +98,13 @@ func routes(_ app: Application) throws {
 	app.post("game", "ships") { req -> HTTPStatus in
 		let shipPositions = try req.content.decode(ShipPositions.self)
 		
+		guard let player = gameSystem.players.find(shipPositions.id) else { return HTTPStatus.notFound }
+		
+		guard player.inGame else { return HTTPStatus.badRequest }
+		
 		if ShipPositions.validateShipPositions(shipPositions.positions) {
-			if let player = gameSystem.players.find(shipPositions.id) {
-				if gameSystem.submitShips(ships: shipPositions, for: player) {
-					return HTTPStatus.ok
-				} else {
-					return HTTPStatus.notFound
-				}
+			if gameSystem.submitShips(ships: shipPositions, for: player) {
+				return HTTPStatus.ok
 			} else {
 				return HTTPStatus.notFound
 			}
@@ -127,7 +127,31 @@ func routes(_ app: Application) throws {
 		
 		return HTTPStatus.ok
 	}
-
-
 	
+	
+	app.post("game", "chat", ":uuid") { req -> HTTPStatus in
+		guard let id = UUID(uuidString: req.parameters.get("uuid")!),
+			  let player = gameSystem.players.find(id),
+			  let message = req.body.string else {
+				  return HTTPStatus.notFound
+			  }
+		
+		if gameSystem.postGameChat(from: player, message: message) {
+			return HTTPStatus.ok
+		}
+		
+		return HTTPStatus.badRequest
+	}
+
+
+	app.post("game", "surrender", ":uuid") { req -> HTTPStatus in
+		guard let id = UUID(uuidString: req.parameters.get("uuid")!),
+			  let player = gameSystem.players.find(id) else {
+				  return HTTPStatus.notFound
+			  }
+		
+		gameSystem.surrenderGame(for: player)
+		
+		return HTTPStatus.ok
+	}
 }

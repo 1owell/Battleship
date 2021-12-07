@@ -32,8 +32,8 @@ class Game: Identifiable {
 	}
 	
 	
-	func endGame() {
-		players.endGame()
+	func endGame(winner: PlayerClient) {
+		players.endGame(winner: winner)
 	}
 	
 	
@@ -41,18 +41,23 @@ class Game: Identifiable {
 		// check turn
 		guard currentTurn?.client == player else { return }
 		
-		// call board.attack
-		// get other player's board
 		if var board = players.getOpponent(for: player).board {
-			if board.registerAttack(at: cell) {
-				emitGameState()
+			switch board.registerAttack(at: cell) {
+				case .missed, .none:
+					return
+				case .hit:
+					emitGameState()
+					currentTurn = players.getOpponent(for: currentTurn!.client)
+				case .allSunk:
+					emitGameState()
+					endGame(winner: player)
 			}
 		}
 	}
 	
 	
 	func createBoard(with ships: ShipPositions, for player: PlayerClient) {
-		players.setBoard(for: player, with: ships)
+		guard players.setBoard(for: player, with: ships) else { return }
 		
 		waitingOnPlayers -= 1
 		if waitingOnPlayers == 0 {
@@ -65,6 +70,7 @@ class Game: Identifiable {
 		// tell the first player that it is their turn
 		// TODO: Make a random player start
 		players.player1.client.send(message: GameMessage(.turnStart))
+		currentTurn = players.player1
 	}
 	
 	
@@ -76,5 +82,10 @@ class Game: Identifiable {
 		
 		players.player1.client.send(message: p1State)
 		players.player2.client.send(message: p2State)
+	}
+	
+	
+	func surrender(for player: PlayerClient) {
+		endGame(winner: players.getOpponent(for: player).client)
 	}
 }

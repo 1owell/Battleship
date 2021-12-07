@@ -10,6 +10,8 @@ import Vapor
 enum GameCode: Int {
 	case start = 0
 	case turnStart = 1
+	case lost = 2
+	case won = 3
 }
 
 struct GameMessage: Codable {
