@@ -1,29 +1,26 @@
 <script>
-	import Game from "./Game.svelte";
+	import Lobby from "./Components/Lobby/Lobby.svelte";
+	import { onMount } from "svelte";
+	import { connect, connectToChat } from './BattleShipAPI';
+	import { player } from './Store';
+	import Game from "./Components/Game/Game.svelte";
+
+	onMount(async () => {
+		connect();
+		connectToChat();
+	});
 </script>
 
 <main>
-	<Game />
+	{#if $player.inGame}
+		<Game />
+	{:else}
+		<Lobby />
+	{/if}
 </main>
 
 <style>
 	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
-
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
+		height: 90%;
 	}
 </style>

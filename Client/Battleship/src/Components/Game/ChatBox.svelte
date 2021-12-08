@@ -1,8 +1,18 @@
 <script>
+    import { gameChat } from '../../BattleShipAPI';
+
     let message='';
+
+    function handleKeyPress(e) {
+        if (e.charCode === 13 && message) {
+            gameChat(message);
+            message = '';
+        }
+    }
 </script>
 
-<input type="text" bind:value={message} placeholder="Send tactical message...">
+<input type="text" bind:value={message} placeholder="Send tactical message..."
+    on:keypress="{ handleKeyPress }">
 
 <style>
     input {
