@@ -1,6 +1,6 @@
 <script>
-    // This ShipPiece component should only know about Ship related game state and presentation.
-    // That includes [Ship hits, size, and presentation]
+    import { player } from '../../Store';
+    
     export let board;
     export let ship;
 
@@ -20,7 +20,9 @@
     $: shipWidth  = isVertical ? thickness : length;
 
     function start() {
-        moving = true;
+        if (!board.isSubmitted) {
+            moving = true;
+        }
     }
 
     function stop() {

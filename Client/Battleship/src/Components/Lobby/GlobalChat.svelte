@@ -31,9 +31,6 @@
                             <button class="confirm" on:click="{ () => respondToInvite(true, message.username)}">
                                 Accept
                             </button>
-                            <button class="deny" on:click="{ () => respondToInvite(false, message.username) }">
-                                Decline
-                            </button>
                         </div>
                     {:else}
                         <div>{ message.username }</div>
