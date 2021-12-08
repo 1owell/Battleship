@@ -6,7 +6,7 @@ func routes(_ app: Application) throws {
 	
 	// Start listening for web socket connections
 	// Once a player (client) connects, they will be added to the system.
-	app.webSocket("connect") { req, ws in
+	app.webSocket("api", "connect") { req, ws in
 		print("Received connection attempt...")
 		
 		struct Username: Content {
@@ -45,7 +45,7 @@ func routes(_ app: Application) throws {
 	}
 	
 	
-	app.webSocket("globalchat") { req, ws in
+	app.webSocket("api", "globalchat") { req, ws in
 		gameSystem.subscribeToGlobalChat(ws)
 	}
 	
