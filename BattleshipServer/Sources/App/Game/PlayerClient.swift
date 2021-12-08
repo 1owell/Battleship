@@ -40,7 +40,8 @@ final class PlayerClient: WebSocketClient {
 	
 	func sendGameProposal(from player: PlayerClient) -> Bool {
 		if !inGame {
-			send(message: GameProposal(fromPlayer: player.username))
+			let proposal = GameProposal(fromPlayer: player.username)
+			send(message: GameMessage(.gameRequest, proposal: proposal))
 			pendingRequests.insert(player)
 			
 			return true

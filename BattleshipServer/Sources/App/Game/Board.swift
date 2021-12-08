@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Board {
+class Board {
 	private var cells: [Cell]
 	private var hits: Int = 0
 	
@@ -28,7 +28,7 @@ struct Board {
 	
 	
 	// boardIndex is 1-100
-	mutating func registerAttack(at boardIndex: Int) -> AttackOutcome? {
+	func registerAttack(at boardIndex: Int) -> AttackOutcome? {
 		guard boardIndex > 0 && boardIndex <= 100 else { return nil }
 		
 		let attack = cells[boardIndex - 1].attack()
