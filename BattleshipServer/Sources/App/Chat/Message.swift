@@ -16,7 +16,7 @@ struct ChatMessage: Encodable, Identifiable {
 	let message: String
 }
 
-
+// Sanitize chat messages
 enum ChatHelper {
 	static func verifyMessage(_ message: String, username: String) -> ChatMessage? {
 		
