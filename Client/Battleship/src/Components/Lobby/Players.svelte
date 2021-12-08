@@ -30,7 +30,7 @@
             <div class="player { player.username == selectedPlayer?.username ? 'selected' : '' }" 
                  on:click="{ () => selectPlayer(player) }"
                  animate:flip="{{duration: 300}}">
-                <span>{player.username}</span>
+                <span class="{ player.inGame ? 'ingame' : '' }">{player.username}</span>
             </div>
         {:else}
             <div></div>
@@ -55,6 +55,10 @@
         overflow-y: auto;
         border-radius: 8px;
         max-height: 500px;
+    }
+
+    .ingame {
+        color: yellow;
     }
 
     .player {

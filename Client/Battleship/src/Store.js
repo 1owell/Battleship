@@ -1,6 +1,5 @@
 import { writable, get } from 'svelte/store';
 import { Game } from './Models/Game';
-import { attack } from './BattleShipAPI';
 
 export const chatMessages = new writable([]);
 export const players = new writable([]);
@@ -10,12 +9,6 @@ export const player = new writable({
     opponentName: ''
 });
 
-
-export function attemptAttack(index) {
-    if (get(player).turnActive) {
-        attack(index + 1);
-    }
-}
 
 export function updatePlayers(playersArray) {
     players.update(_ => playersArray);
@@ -43,29 +36,44 @@ export function setUsername(newUsername) {
 }
 
 export function handleGameMessage(payload) {
+    console.log(payload);
     switch (payload.status) {
         case 0:
             // game start
             startGame();
+            console.log("starting game");
+            break;
         case 1:
             // turn start
-            turnStart();
+            console.log("turn start")
+            turnStart(payload.board);
+            break;
         case 2:
             // turn end
-            turnEnd();
+            console.log("turn end")
+            turnEnd(payload.board);
+            break;
         case 3:
             // lost
+            console.log("lost")
             endGame(false);
+            break;
         case 4:
             // won
+            console.log("won")
             endGame(true);
+            break;
         case 5:
             // chat
+            console.log("new game chat")
             postGameChatMessage(payload.chat);
+            break;
         case 6:
             // game request
+            console.log("new game request")
             processGameRequest(payload.proposal.fromPlayer);
-    }
+            break;
+    }  
 }
 
 function startGame() {
@@ -76,16 +84,20 @@ function startGame() {
     });
 }
 
-function turnStart() {
+function turnStart(boardStates) {
     player.update(playerState => {
         playerState.turnActive = true;
+        playerState.game.playerBoard.update(boardStates.playerState);
+        playerState.game.opponentBoard.update(boardStates.opponentState);
         return playerState;
     });
 }
 
-function turnEnd() {
+function turnEnd(boardStates) {
     player.update(playerState => {
         playerState.turnActive = false;
+        playerState.game.playerBoard.update(boardStates.playerState);
+        playerState.game.opponentBoard.update(boardStates.opponentState);
         return playerState;
     });
 }
@@ -101,14 +113,14 @@ function endGame(didWin) {
     });
 
     if (didWin) {
-        alert("You beat" + opponent);
+        window.alert("You beat" + opponent);
     } else {
-        alert("You lost to " + opponent);
+        window.alert("You lost to " + opponent);
     }
 }
 
 function postGameChatMessage(message) {
-
+    alert(message.message);
 }
 
 function processGameRequest(sender) {

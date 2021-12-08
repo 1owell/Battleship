@@ -9,19 +9,15 @@
     const length          = cellWidth * ship.size - (shipStrokeWidth * 2);
     const thickness       = 35;
 
-    const x = () => cellWidth / 2;
-    const y = (i) => 20 + (i * cellWidth);
-    
     let moving = false;
+    let didRotate = false;
 
-    $: left = (ship.origin.x - 1) * cellWidth;
-    $: top  = (ship.origin.y - 1) * cellWidth - (ship.isVertical ? 0 : 50);
-
-    $: shipLength = ship.isVertical ? length : thickness;
-    $: shipWidth  = ship.isVertical ? thickness : length;
-
-    $: shipX = (i) => ship.isVertical ? x() : y(i);
-    $: shipY = (i) => ship.isVertical ? y(i) : x();
+    
+    $: isVertical = ship.isVertical;
+    $: left = (ship.col - 1) * cellWidth;
+    $: top  = (ship.row - 1) * cellWidth;
+    $: shipLength = isVertical ? length : thickness;
+    $: shipWidth  = isVertical ? thickness : length;
 
     function start() {
         moving = true;
@@ -29,8 +25,11 @@
 
     function stop() {
         if (moving) {
+            board.stoppedDragging(ship, left, top, didRotate);
             moving = false;
-            board.stoppedDragging(ship, left, top);
+            didRotate = false;
+            ship.isVertical = isVertical;
+            
         }  
     }
 
@@ -43,11 +42,32 @@
 
     function rotate(e) {
         if (e.keyCode == 32 && moving) {
-            ship.isVertical = !ship.isVertical;
+            isVertical = !isVertical;
+            didRotate = !didRotate;
         }
     }
-</script>
 
+    $: cx = (i) => {
+        if (isVertical) {
+            return cellWidth / 2;
+        } else {
+            return (cellWidth / 2) + (i * cellWidth);
+        }
+    }
+
+    $: cy = (i) => {
+        if (isVertical) {
+            return 20 + (i * cellWidth);
+        } else {
+            return 20;
+        }
+    }
+
+    $: color = (i) => {
+        board.$state;
+        return board.isHit(ship.cells[i]) ? 'red' : 'gray';
+    }
+</script>
 
 <svelte:window on:mouseup={stop} on:mousemove={move} on:keyup={rotate} />
 
@@ -57,8 +77,8 @@
         stroke={ ship.isValid ? "gray" : "red" } stroke-width={shipStrokeWidth}/>
 
     {#each Array(ship.size) as _, i}
-        <circle fill="gray" 
-            cx={ shipX(i) } cy={ shipY(i) } r="10"
+        <circle fill="{ color(i) }" 
+            cx={ cx(i) } cy={ cy(i) } r="10"
             stroke="darkgray"
             stroke-width="4" />
     {/each}

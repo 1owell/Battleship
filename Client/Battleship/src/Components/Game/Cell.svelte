@@ -1,5 +1,6 @@
 <script>
-    import { attemptAttack } from '../../Store';
+    import { attack } from '../../BattleShipAPI';
+    import { player } from '../../Store';
 
     export let cell;
     export let index;
@@ -8,15 +9,25 @@
     let x = 50 * (index % 10) + 25;
     let y = 50 * Math.floor(index / 10) + 20;
 
-    function attack() {
-        if (isOpponent) {
-            attemptAttack(index);
+    function attemptAttack() {
+        if (isOpponent && $player.turnActive && !$player.game.opponentBoard.isHit(cell + 1)) {
+            attack(index + 1);
         }   
+    }
+
+    $: color = () => {
+        if (cell == 2) {
+            return "red";
+        } else if (cell == 1) {
+            return "white";
+        } else {
+            return "lightblue";
+        }
     }
 </script>
 
-<circle class:isOpponent on:click={ attack }
-    fill={ cell > 0 ? "red" : "lightblue" } 
+<circle class:isOpponent on:click={ attemptAttack }
+    fill="{ color() }" 
     cx="{ x }" 
     cy="{ y }" 
     r="18"

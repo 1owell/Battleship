@@ -4,17 +4,20 @@
     import { player } from '../../Store';
     import { Game } from '../../Models/Game';
 
-    let game = new Game();
+    //let game = new Game();
+
+    $: turn = $player.turnActive;
+    $: game = $player.game;
 </script>
 
 <div class="game">
-    <div class="player">
+    <div class="player { turn ? 'turn' : '' }">
         <h3>{ $player.username || 'Your Board' }</h3>
         <Board board={game.playerBoard} />
         <ChatBox />
     </div>
 
-    <div class="player">
+    <div class="player { turn ? '' : 'turn' }">
         <h3>{ $player.opponentName || 'Their Board'}</h3>
         <Board board={game.opponentBoard} />
     </div>
@@ -34,5 +37,9 @@
 
     h3 {
         color: white;
+    }
+
+    .turn {
+        border: 4px solid white;
     }
 </style>

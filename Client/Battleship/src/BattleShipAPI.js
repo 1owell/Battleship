@@ -84,7 +84,7 @@ export async function requestGame(username) {
 }
 
 export async function respondToInvite(response, senderUsername) {
-    return fetch(getURL(`/inviteResponse?response=${ response }&sender=${ senderUsername }&from=${ uuid }`), {
+    return fetch(getURL(`/inviteResponse?response=${ response }&sender=${ senderUsername }&id=${ uuid }`), {
         method: 'POST'
     });
 }
@@ -101,7 +101,7 @@ export async function submitShips(positions) {
 }
 
 export async function attack(cell) {
-    return fetch(getURL(`/game/attack/${uuid}/${cell}`), { method: 'POST '});
+    return fetch(getURL(`/game/attack/${uuid}/${cell}`), { method: 'POST'});
 }
 
 export async function gameChat(message) {

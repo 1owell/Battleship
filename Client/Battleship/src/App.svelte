@@ -6,18 +6,17 @@
 	import Game from "./Components/Game/Game.svelte";
 
 	onMount(async () => {
-		// connect();
-		// connectToChat();
+		connect();
+		connectToChat();
 	});
 </script>
 
 <main>
-	<Game />
-	<!-- {#if $player.inGame}
-		
+	{#if $player.inGame}
+		<Game />
 	{:else}
 		<Lobby />
-	{/if} -->
+	{/if}
 </main>
 
 <style>
