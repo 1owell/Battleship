@@ -1,6 +1,5 @@
 <script>
     import Cell from "./Cell.svelte";
-    import Draggable from "./Draggable.svelte";
     import ShipPiece from "./ShipPiece.svelte";
     
     export let board;
@@ -15,24 +14,24 @@
                 <p>{String.fromCharCode(i + 65)}</p>
             {/each}
         </div>
+
         <div class="board">
             {#each Array(10) as _, i}
                 <p>{i + 1}</p>
             {/each}
 
             <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg">
-                {#each $state.cells as cell}
-                    <Cell cell={cell} isOpponent={ $state.ships == undefined } />
+                {#each $state.cells as cell, index}
+                    <Cell cell={cell} index={index} isOpponent={ $state.ships == undefined } />
                 {/each}
 
                 {#each $state.ships ?? [] as ship}
-                    <Draggable state={state} ship={ship}>
-                        <ShipPiece ship={ship} />
-                    </Draggable>
+                    <ShipPiece ship={ship} board={board} />
                 {/each}
             </svg>
         </div>
     </div>
+
     <div class="stats">
         <p>Status Report</p>
         <p>Hits: 4</p>
@@ -69,6 +68,10 @@
     .board {
         display: grid;
         grid-template-columns: repeat(10, 50px);
+    }
+
+    .board p {
+        text-align: center;
     }
 
     .y {

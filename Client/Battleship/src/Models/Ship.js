@@ -18,6 +18,10 @@ export class Ship {
         });
     }
 
+    get cells() {
+        
+    }
+
     hit(pos) {
         if (pos <= this.size && !this.hits.includes(pos)) {
             this.hits.push(pos);
@@ -26,14 +30,15 @@ export class Ship {
 
     toggleOrientation() {
         this.isVertical = !this.isVertical;
-        console.log("Toggle called")
     }
 
     isOverlapping(otherShip) {
         const combined = [...this.points, ...otherShip.points];
         const distinct = new Set(combined.map(JSON.stringify));
+        
         console.log(combined, distinct)
         console.log(this.name, 'is overlapping with', otherShip.name, distinct.size < combined.length)
+        
         return distinct.size < combined.length;
     }
 }

@@ -1,18 +1,21 @@
 <script>
     import Board from "./Board.svelte";
     import ChatBox from "./ChatBox.svelte";
-    import { game } from "./BoardStore";
+    import { player } from '../../Store';
+    import { Game } from '../../Models/Game';
 
+    let game = new Game();
 </script>
 
 <div class="game">
     <div class="player">
-        <h3>Player 1 Name</h3>
+        <h3>{ $player.username || 'Your Board' }</h3>
         <Board board={game.playerBoard} />
         <ChatBox />
     </div>
+
     <div class="player">
-        <h3>Player 2 Name</h3>
+        <h3>{ $player.opponentName || 'Their Board'}</h3>
         <Board board={game.opponentBoard} />
     </div>
 </div>
