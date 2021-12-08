@@ -49,36 +49,29 @@ export function handleGameMessage(payload) {
         case 0:
             // game start
             startGame();
-            console.log("starting game");
             break;
         case 1:
             // turn start
-            console.log("turn start")
             turnStart(payload.board);
             break;
         case 2:
             // turn end
-            console.log("turn end")
             turnEnd(payload.board);
             break;
         case 3:
             // lost
-            console.log("lost")
             endGame(false);
             break;
         case 4:
             // won
-            console.log("won")
             endGame(true);
             break;
         case 5:
             // chat
-            console.log("new game chat")
             postGameChatMessage(payload.chat);
             break;
         case 6:
             // game request
-            console.log("new game request")
             processGameRequest(payload.proposal.fromPlayer);
             break;
     }  

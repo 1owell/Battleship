@@ -96,7 +96,7 @@
         background: rgba(67, 100, 67, 0.767);
     }
 
-    .deny {
+    /* .deny {
         background: rgba(194, 123, 123, 0.932);
     }
 
@@ -106,7 +106,7 @@
 
     .deny:active {
         background: rgba(112, 71, 71, 0.932);
-    }
+    } */
 
     input {
         border-radius: 6px;
