@@ -1,6 +1,4 @@
 <script>
-    import { player } from '../../Store';
-    
     export let board;
     export let ship;
 
