@@ -1,6 +1,6 @@
 import { newMessage, setUsername, handleGameMessage, updatePlayers, setOpponent } from './Store';
 
-let base = '192.168.29.251:8080';
+let base = '45.79.164.175/api';
 let socketBase = 'ws://' + base;
 let httpBase = 'http://' + base;
 
