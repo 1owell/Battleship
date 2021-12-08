@@ -1,10 +1,8 @@
 <script>
     import Board from "./Board.svelte";
     import ChatBox from "./ChatBox.svelte";
+    import { surrender } from "../../BattleShipAPI";
     import { player } from '../../Store';
-    import { Game } from '../../Models/Game';
-
-    //let game = new Game();
 
     $: turn = $player.turnActive;
     $: game = $player.game;
@@ -15,11 +13,13 @@
         <h3>{ $player.username || 'Your Board' }</h3>
         <Board board={game.playerBoard} />
         <ChatBox />
+        <button on:click="{ () => surrender() }">Surrender</button>
     </div>
 
     <div class="player { turn ? '' : 'turn' }">
         <h3>{ $player.opponentName || 'Their Board'}</h3>
         <Board board={game.opponentBoard} />
+        <p>{ $player.opponentMessage || "Silence..." }</p>
     </div>
 </div>
 
@@ -41,5 +41,10 @@
 
     .turn {
         border: 4px solid white;
+    }
+    
+    button {
+        background: none;
+        color: white;
     }
 </style>

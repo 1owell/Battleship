@@ -1,17 +1,19 @@
 <script>
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { getPlayers } from '../../BattleShipAPI';
     import { flip } from 'svelte/animate';
     import { players } from '../../Store';
 
     onMount(async () => refresh());
+    onDestroy(async () => clearTimeout(timer));
 
     export let selectedPlayer = undefined;
 
+    let timer;
 
     async function refresh() {
         await getPlayers();
-        setTimeout(refresh, 5000);
+        timer = setTimeout(refresh, 5000);
     }
 
     function selectPlayer(player) {

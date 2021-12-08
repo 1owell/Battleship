@@ -10,7 +10,9 @@
     let y = 50 * Math.floor(index / 10) + 20;
 
     function attemptAttack() {
-        if (isOpponent && $player.turnActive && !$player.game.opponentBoard.isHit(cell + 1)) {
+        console.log("player turnactive", $player.turnActive)
+        console.log(!$player.game.opponentBoard.isHit(cell + 1), "has not been hit?")
+        if (isOpponent && $player.turnActive && !$player.game.opponentBoard.isHit(index + 1)) {
             attack(index + 1);
         }   
     }

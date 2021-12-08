@@ -1,4 +1,4 @@
-import { newMessage, setUsername, handleGameMessage, updatePlayers } from './Store';
+import { newMessage, setUsername, handleGameMessage, updatePlayers, setOpponent } from './Store';
 
 let base = '192.168.29.251:8080';
 let socketBase = 'ws://' + base;
@@ -80,10 +80,14 @@ export async function updateUsername(username) {
 }
 
 export async function requestGame(username) {
+    setOpponent(username);
     return fetch(getURL(`/requestGame?to=${ username }&from=${ uuid }`), { method: 'POST' });
 }
 
 export async function respondToInvite(response, senderUsername) {
+    if (response == true) {
+        setOpponent(senderUsername);
+    }
     return fetch(getURL(`/inviteResponse?response=${ response }&sender=${ senderUsername }&id=${ uuid }`), {
         method: 'POST'
     });

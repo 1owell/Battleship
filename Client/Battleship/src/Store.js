@@ -10,6 +10,14 @@ export const player = new writable({
 });
 
 
+export function setOpponent(opponent) {
+    player.update(p => {
+        p.opponentName = opponent;
+        return p;
+    });
+}
+
+
 export function updatePlayers(playersArray) {
     players.update(_ => playersArray);
 }
@@ -103,24 +111,28 @@ function turnEnd(boardStates) {
 }
 
 function endGame(didWin) {
-    const opponent = ''
+    let opponent = ''
     player.update(playerState => {
-        playerState.inGame = false;
+        playerState.inGame     = false;
         playerState.turnActive = false;
-        playerState.game = undefined;
+        playerState.game       = undefined;
+        playerState.opponentMessage = '';
         opponent = playerState.opponentName;
         return playerState;
     });
 
     if (didWin) {
-        window.alert("You beat" + opponent);
+        window.alert("You beat " + opponent);
     } else {
         window.alert("You lost to " + opponent);
     }
 }
 
 function postGameChatMessage(message) {
-    alert(message.message);
+    player.update(p => {
+        p.opponentMessage = message.message;
+        return p;
+    })
 }
 
 function processGameRequest(sender) {
