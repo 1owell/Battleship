@@ -59,6 +59,11 @@ class GameSystem {
 		
 		// Remove player when connection is closed
 		ws.onClose.whenComplete { [unowned self] _ in
+			if player.inGame {
+				if let gameID = player.currentGame, let game = activeGames[gameID] {
+					game.surrender(for: player)
+				}
+			}
 			players.remove(player)
 		}
 	}
@@ -139,8 +144,10 @@ class GameSystem {
 	}
 	
 	
-	func usernameIsUnique(_ username: String) -> Bool {
-		players.active.first { $0.username == username } == nil
+	func usernameIsValid(_ username: String) -> Bool {
+		guard !username.isEmpty else { return false }
+		
+		return players.active.first { $0.username == username } == nil
 	}
 	
 	

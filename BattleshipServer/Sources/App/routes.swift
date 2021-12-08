@@ -16,10 +16,10 @@ func routes(_ app: Application) throws {
 		if let usernameReq = try? req.query.decode(Username.self) {
 			let username = usernameReq.username
 			
-			if gameSystem.usernameIsUnique(username) {
+			if gameSystem.usernameIsValid(username) {
 				gameSystem.connectPlayer(ws, username: username)
 			} else {
-				ws.close(code: .unacceptableData, promise: nil)
+				ws.close(code: .init(codeNumber: 4000), promise: nil)
 			}
 		} else {
 			ws.close(promise: nil)
@@ -32,7 +32,9 @@ func routes(_ app: Application) throws {
 		if let id = UUID(uuidString: req.parameters.get("uuid")!),
 		   let player = gameSystem.players.find(id),
 		   let username = req.body.string {
-			guard gameSystem.usernameIsUnique(username) else { return HTTPStatus.conflict }
+			
+			if username.isEmpty { return HTTPStatus.badRequest }
+			guard gameSystem.usernameIsValid(username) else { return HTTPStatus.conflict }
 			
 			player.username = username
 			

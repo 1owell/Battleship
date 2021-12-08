@@ -12,12 +12,12 @@ class Game: Identifiable {
 		let client: PlayerClient
 		var board: Board? = nil
 		
-		func startTurn() {
-			client.send(message: GameMessage(.turnStart))
+		func startTurn(state: GameState) {
+			client.send(message: GameMessage(.turnStart, board: state))
 		}
 		
-		func endTurn() {
-			client.send(message: GameMessage(.turnEnd))
+		func endTurn(state: GameState) {
+			client.send(message: GameMessage(.turnEnd, board: state))
 		}
 	}
 	
@@ -49,15 +49,14 @@ class Game: Identifiable {
 		// check turn
 		guard currentTurnPlayer?.client == player else { return }
 		
-		if var board = players.getOpponent(for: player).board {
+		if let board = players.getOpponent(for: player).board {
 			if let attack = board.registerAttack(at: cell) {
-				
-				emitGameState()
-				
+			
 				switch attack {
 					case .missed, .hit:
 						switchTurns()
 					case .allSunk:
+						switchTurns()
 						endGame(winner: player)
 				}
 			}
@@ -66,12 +65,14 @@ class Game: Identifiable {
 	
 	
 	private func switchTurns() {
-		guard let currentTurnPlayer = currentTurnPlayer else { return }
+		guard let currentTurnPlayer = currentTurnPlayer, let gs1 = getGameState(for: currentTurnPlayer) else { return }
 
 		let opponent = players.getOpponent(for: currentTurnPlayer.client)
 		
-		currentTurnPlayer.endTurn()
-		opponent.startTurn()
+		guard let gs2 = getGameState(for: opponent) else { return }
+		
+		currentTurnPlayer.endTurn(state: gs1)
+		opponent.startTurn(state: gs2)
 		
 		self.currentTurnPlayer = opponent
 	}
@@ -90,22 +91,22 @@ class Game: Identifiable {
 	// tell the first player that it is their turn
 	func startGame() {
 		// TODO: Make a random player start
-		players.player1.client.send(message: GameMessage(.turnStart))
 		currentTurnPlayer = players.player1
+		switchTurns()
 	}
 	
 	
-	func emitGameState() {
-		guard let p1Board = players.player1.board, let p2Board = players.player2.board else { return }
+	func getGameState(for player: Player) -> GameState? {
+		guard let p1Board = players.player1.board, let p2Board = players.player2.board else { return nil }
 		
 		let p1BoardState = p1Board.getState()
 		let p2BoardState = p2Board.getState()
-		
-		let p1State = GameState(playerState: p1BoardState, opponentState: p2BoardState)
-		let p2State = GameState(playerState: p2BoardState, opponentState: p1BoardState)
-		
-		players.player1.client.send(message: p1State)
-		players.player2.client.send(message: p2State)
+
+		if player.client == players.player1.client {
+			return GameState(playerState: p1BoardState, opponentState: p2BoardState)
+		} else {
+			return GameState(playerState: p2BoardState, opponentState: p1BoardState)
+		}
 	}
 	
 	
