@@ -8,4 +8,4 @@ There is no database, the server side Swift stores all game data in memory.
 
 Players are prompted for a username when visiting, and their session is uniquely identified by a UUID.
 
-WebSockets are used to notify the client about game updates.
+WebSockets are used to notify the client about game updates as well as a global and game based chat rooms.
